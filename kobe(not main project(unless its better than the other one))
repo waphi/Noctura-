@@ -7,8 +7,8 @@
 #define TFT_DC     7
 
 // Pin definitions for Ultrasonic Sensor
-#define TRIG_PIN   5  // Trigger Pin
-#define ECHO_PIN   6  // Echo Pin
+#define TRIG_PIN   6  // Trigger Pin
+#define ECHO_PIN   5  // Echo Pin
 
 // Initialize the LCD
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
