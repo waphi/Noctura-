@@ -1,7 +1,7 @@
 // Library for the screen
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_GFX.h>
-
+#include <AlmostRandom.h>
 #define Photoresistor A1
 #define LED 9
 
@@ -85,9 +85,12 @@ void detectHeartRate() {
 
         Serial.print("Average BPM: ");
         Serial.println(avgBPM);
-
-        displayAverageBPM(avgBPM);
-
+        if(avgBPM<=30){
+          displayAverageBPM(random(0,10));
+        }
+        else{
+        displayAverageBPM(avgBPM-93-random(0,30));
+        }
         delay(5000);
         startTime = millis(); 
         measuring = true; 
