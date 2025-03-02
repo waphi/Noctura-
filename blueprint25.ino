@@ -60,7 +60,12 @@ void detectHeartRate() {
             bpmReadings[bpmCount] = bpm; 
             bpmCount++;
         }
-
+        if(bpm<58){
+            bpm+=bpm*0.1;
+        }
+        if(bpm>=130){
+            bpm-=bpm*0.08;
+        }
         Serial.print("Heart Rate: ");
         Serial.println(bpm);
     }
