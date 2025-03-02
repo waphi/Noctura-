@@ -1,36 +1,84 @@
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <Adafruit_ILI9341.h> // LCD library
 
-// Pin definitions
+// Pin definitions for TFT display
 #define TFT_CS     10
 #define TFT_RST    8
 #define TFT_DC     7
 
+// Pin definitions for Ultrasonic Sensor
+#define TRIG_PIN   5  // Trigger Pin
+#define ECHO_PIN   6  // Echo Pin
+
 // Initialize the LCD
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC, TFT_RST);
 
+// Variables
+int score = 0;
+bool objectDetected = false;  // Prevent multiple detections per pass
+
 void setup() {
-  // Start the serial communication
-  Serial.begin(9600);
-  
+  Serial.begin(9600);  // Start serial communication
+
   // Initialize the TFT display
   tft.begin();
-  
-  // Set rotation and clear the screen
-  tft.setRotation(3);   // You can change this depending on your display orientation
-  tft.fillScreen(ILI9341_WHITE);  // Fill the screen with white
-  
+  tft.setRotation(3);
+  tft.fillScreen(ILI9341_WHITE);
+
   // Set text properties
-  tft.setTextColor(ILI9341_BLACK);  // Text color (black)
-  tft.setTextSize(2);              // Text size (larger size)
-  
-  // Display some text
-  tft.setCursor(40, 60);           // Set the cursor position (x, y)
-  tft.print("skibidi sigma");
-  
-  delay(2000); // Wait for 2 seconds
+  tft.setTextColor(ILI9341_BLACK);
+  tft.setTextSize(2);
+
+  // Display initial text
+  tft.setCursor(40, 40);
+  tft.print("Basketball Game");
+
+  // Display initial score
+  updateScore();
+
+  // Setup Ultrasonic Sensor
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
 }
 
 void loop() {
-  // You can add more code here to update the display in a loop if needed
+  long duration;
+  int distance;
+
+  // Send a 10-microsecond pulse to trigger pin
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Read the echo pin, and calculate the distance
+  duration = pulseIn(ECHO_PIN, HIGH);
+  distance = duration * 0.034 / 2;  // Convert to cm
+
+  Serial.print("Distance: ");
+  Serial.println(distance);
+
+  // Check if an object is within a certain range (e.g., under 15 cm)
+  if (distance > 0 && distance < 15) {
+    if (!objectDetected) {  // Prevents continuous increments while the ball is present
+      score++;  // Increase score
+      updateScore();
+      objectDetected = true;
+    }
+  } else {
+    objectDetected = false;  // Reset when object is no longer detected
+  }
+
+  delay(200); // Short delay to prevent multiple readings
+}
+
+// Function to update the score on LCD
+void updateScore() {
+  tft.fillRect(40, 80, 200, 40, ILI9341_WHITE);  // Clear previous score area
+  tft.setCursor(40, 100);
+  tft.setTextSize(3);
+  tft.setTextColor(ILI9341_BLACK);
+  tft.print("Score: ");
+  tft.print(score);
 }
