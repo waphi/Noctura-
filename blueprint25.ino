@@ -1,11 +1,11 @@
-//library for the screen
+// Library for the screen
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_GFX.h>
 
 #define Photoresistor A1
 #define LED 9
 
-//what we need to define in order for the screen to work
+// Define screen parameters
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET     -1 
@@ -13,44 +13,42 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 int bpm = 0;
-int threshold = 600;
+int threshold = 400; // Adjust this based on sensor values
 unsigned long lastPeakTime = 0;
 
 // Timer variables for 10-second measurement
 unsigned long startTime = 0;
 bool measuring = true;
-const int duration = 10000; //10000ms = 10s
+const int duration = 10000; // 10 seconds
 
 // BPM storage
-const int maxReadings = 20; // Stores up to 20 BPM values
+const int maxReadings = 20;
 int bpmReadings[maxReadings];
 int bpmCount = 0;
 
 void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
-  pinMode(Photoresistor, INPUT);
-  pinMode(LED, OUTPUT);
+    Serial.begin(9600);
+    delay(1000);
+    pinMode(Photoresistor, INPUT);
+    pinMode(LED, OUTPUT);
 
-  startTime = millis(); //will start the program the moment the thing is turns on
+    startTime = millis();  // Start the timer
 }
 
-void fade_led() {
-  for (int i = 0; i <= 255; ++i) {
-    analogWrite(LED, i);
-    delay(10);
-  }
+// Function to calculate BPM based on time between beats
+int calculateBPM(unsigned long timeBetweenPeaks) {
+    if (timeBetweenPeaks == 0) return 0; 
+    return 60000 / timeBetweenPeaks; 
 }
 
-int bpmCalculations(unsigned long timeBetweenPeaks) {
-    if (timeBetweenPeaks == 0) return 0; // Avoid division by zero
-    return 60000 / timeBetweenPeaks; // Convert milliseconds to BPM
-}
-
+// Function to detect heartbeat and collect BPM values
 void detectHeartRate() {
-    if (!measuring) return;  // Stop measurement after 10 seconds
+    if (!measuring) return;  // Stops measurement after 10 seconds
 
     int sensorValue = analogRead(Photoresistor);
+    Serial.print("Sensor Value: "); 
+    Serial.println(sensorValue); 
+
     unsigned long currentTime = millis();
     unsigned long timeBetweenPeaks = currentTime - lastPeakTime;
 
@@ -59,44 +57,38 @@ void detectHeartRate() {
         bpm = calculateBPM(timeBetweenPeaks);
 
         if (bpmCount < maxReadings) {
-            bpmReadings[bpmCount] = bpm;  // Stores BPM value
+            bpmReadings[bpmCount] = bpm; 
             bpmCount++;
         }
 
         Serial.print("Heart Rate: ");
         Serial.println(bpm);
     }
-}
 
     // Stop collecting after 10 seconds
-  if (millis() - startTime >= duration) {
-      measuring = false; // Stops heart rate detection
+    if (millis() - startTime >= duration) { 
+        measuring = false; // Stops heart rate detection
 
         int sum = 0;
         for (int i = 0; i < bpmCount; i++) {
             sum += bpmReadings[i];
         }
         int avgBPM = bpmCount > 0 ? sum / bpmCount : 0;
+
+        Serial.print("Average BPM: ");
+        Serial.println(avgBPM);
+
         displayAverageBPM(avgBPM);
-}
 
-int calculateBPM(unsigned long timeBetweenPeaks) {
-    if (timeBetweenPeaks == 0) return 0; // Avoid division by zero
-    return 60000 / timeBetweenPeaks; // Convert milliseconds to BPM
-}
-//displaying the BPM to the display
-void displayAverageBPM(int bpmValue) {
-  if (bpmCount == 0) return; // Prevent division by zero
-
-    int sum = 0;
-    for (int i = 0; i < bpmCount; i++) {
-        sum += bpmReadings[i];
+        delay(5000);
+        startTime = millis(); 
+        measuring = true; 
+        bpmCount = 0;
     }
-    int avgBPM = sum / bpmCount; // Calculate average
+}
 
-    Serial.print("Average BPM: ");
-    Serial.println(avgBPM);
-
+// Function to display BPM on the OLED screen
+void displayAverageBPM(int bpmValue) {
     display.clearDisplay();
     display.setTextSize(2);
     display.setTextColor(WHITE);
@@ -106,17 +98,15 @@ void displayAverageBPM(int bpmValue) {
     display.display();
 }
 
-//just to test the led 
-void rapidBlinking(){
-  analogWrite(LED, 225);
-  delay(7);
-  analogWrite(LED, 225);
-  delay(7);
+// LED Blinking function
+void rapidBlinking() {
+    analogWrite(LED, 225);
+    delay(7);
+    analogWrite(LED, 0);
+    delay(7);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  detectHeartRate();
-  rapidBlinking();
-
+    detectHeartRate();
+    rapidBlinking();    
 }
