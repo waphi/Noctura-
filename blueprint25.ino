@@ -33,6 +33,14 @@ void setup() {
     pinMode(LED, OUTPUT);
 
     startTime = millis();  // Start the timer
+
+      // initialize display
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println("SSD1306 allocation failed");
+    for(;;); // Don't proceed, loop forever
+  }
+  display.clearDisplay();
+  display.display();
 }
 
 // Function to calculate BPM based on time between beats
@@ -60,12 +68,7 @@ void detectHeartRate() {
             bpmReadings[bpmCount] = bpm; 
             bpmCount++;
         }
-        if(bpm<58){
-            bpm+=bpm*0.1;
-        }
-        if(bpm>=130){
-            bpm-=bpm*0.08;
-        }
+
         Serial.print("Heart Rate: ");
         Serial.println(bpm);
     }
